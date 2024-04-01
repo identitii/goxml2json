@@ -15,18 +15,20 @@ const (
 
 // A Decoder reads and decodes XML objects from an input stream.
 type Decoder struct {
-	r               io.Reader
-	err             error
-	attributePrefix string
-	contentPrefix   string
-	excludeAttrs    map[string]bool
-	formatters      []nodeFormatter
+	r                      io.Reader
+	err                    error
+	attributePrefix        string
+	contentPrefix          string
+	excludeAttrs           map[string]bool
+	formatters             []nodeFormatter
+	includeNamespacePrefix bool
 }
 
 type element struct {
-	parent *element
-	n      *Node
-	label  string
+	parent   *element
+	nsPrefix string
+	n        *Node
+	label    string
 }
 
 func (dec *Decoder) SetAttributePrefix(prefix string) {
@@ -39,6 +41,10 @@ func (dec *Decoder) SetContentPrefix(prefix string) {
 
 func (dec *Decoder) AddFormatters(formatters []nodeFormatter) {
 	dec.formatters = formatters
+}
+
+func (dec *Decoder) SetIncludePrefix(prefix bool) {
+	dec.includeNamespacePrefix = prefix
 }
 
 func (dec *Decoder) ExcludeAttributes(attrs []string) {
@@ -86,9 +92,10 @@ func (dec *Decoder) Decode(root *Node) error {
 		case xml.StartElement:
 			// Build new a new current element and link it to its parent
 			elem = &element{
-				parent: elem,
-				n:      &Node{},
-				label:  se.Name.Local,
+				parent:   elem,
+				nsPrefix: se.Name.Space,
+				n:        &Node{},
+				label:    se.Name.Local,
 			}
 
 			// Extract attributes as children
@@ -98,6 +105,7 @@ func (dec *Decoder) Decode(root *Node) error {
 				}
 				elem.n.AddChild(dec.attributePrefix+a.Name.Local, &Node{Data: a.Value})
 			}
+			elem.n.AddNamespacePrefix(se.Name.Space)
 		case xml.CharData:
 			// Extract XML data (if any)
 			elem.n.Data = trimNonGraphic(string(xml.CharData(se)))
