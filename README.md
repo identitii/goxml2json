@@ -2,6 +2,12 @@
 
 Go package that converts XML to JSON
 
+## Identitii fork
+
+Supports:
+ - xmlns prefixes
+ - maintains ordering
+
 ### Install
 
     go get -u github.com/basgys/goxml2json
