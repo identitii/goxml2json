@@ -15,13 +15,15 @@ const (
 
 // A Decoder reads and decodes XML objects from an input stream.
 type Decoder struct {
-	r                      io.Reader
-	err                    error
-	attributePrefix        string
-	contentPrefix          string
-	excludeAttrs           map[string]bool
-	formatters             []nodeFormatter
-	includeNamespacePrefix bool
+	r               io.Reader
+	err             error
+	attributePrefix string
+	contentPrefix   string
+	nsPrefix        string
+	includeNSPrefix bool
+	excludeAttrs    map[string]bool
+	formatters      []nodeFormatter
+	NameSpacePrefix map[string]string
 }
 
 type element struct {
@@ -43,8 +45,9 @@ func (dec *Decoder) AddFormatters(formatters []nodeFormatter) {
 	dec.formatters = formatters
 }
 
-func (dec *Decoder) SetIncludePrefix(prefix bool) {
-	dec.includeNamespacePrefix = prefix
+func (dec *Decoder) SetIncludePrefix(prefix string) {
+	dec.includeNSPrefix = true
+	dec.nsPrefix = prefix
 }
 
 func (dec *Decoder) ExcludeAttributes(attrs []string) {
@@ -61,7 +64,7 @@ func (dec *Decoder) DecodeWithCustomPrefixes(root *Node, contentPrefix string, a
 
 // NewDecoder returns a new decoder that reads from r.
 func NewDecoder(r io.Reader, plugins ...plugin) *Decoder {
-	d := &Decoder{r: r, contentPrefix: contentPrefix, attributePrefix: attrPrefix, excludeAttrs: map[string]bool{}}
+	d := &Decoder{r: r, contentPrefix: contentPrefix, attributePrefix: attrPrefix, excludeAttrs: map[string]bool{}, NameSpacePrefix: map[string]string{}}
 	for _, p := range plugins {
 		d = p.AddToDecoder(d)
 	}
@@ -92,20 +95,29 @@ func (dec *Decoder) Decode(root *Node) error {
 		case xml.StartElement:
 			// Build new a new current element and link it to its parent
 			elem = &element{
-				parent:   elem,
-				nsPrefix: se.Name.Space,
-				n:        &Node{},
-				label:    se.Name.Local,
+				parent: elem,
+				n:      &Node{},
+				label:  se.Name.Local,
+			}
+			if se.Name.Space != "" && dec.includeNSPrefix {
+				prefix, exists := dec.NameSpacePrefix[se.Name.Space]
+				if exists {
+					elem.label = prefix + ":" + se.Name.Local
+				}
 			}
 
 			// Extract attributes as children
 			for _, a := range se.Attr {
+				// add prefix (local name) to store under the Namespace key
+				if a.Name.Space == "xmlns" && a.Name.Local != "" {
+					dec.NameSpacePrefix[a.Value] = a.Name.Local
+				}
+
 				if _, ok := dec.excludeAttrs[a.Name.Local]; ok {
 					continue
 				}
 				elem.n.AddChild(dec.attributePrefix+a.Name.Local, &Node{Data: a.Value})
 			}
-			elem.n.AddNamespacePrefix(se.Name.Space)
 		case xml.CharData:
 			// Extract XML data (if any)
 			elem.n.Data = trimNonGraphic(string(xml.CharData(se)))
