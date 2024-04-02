@@ -2,7 +2,6 @@ package xml2json
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"unicode/utf8"
 )
@@ -48,7 +47,6 @@ func (enc *Encoder) Encode(root *Node) error {
 }
 
 func (enc *Encoder) format(n *Node, lvl int) error {
-	fmt.Println(n.Prefix, n.IsComplex(), n.Data)
 	if n.IsComplex() {
 		enc.write("{")
 
