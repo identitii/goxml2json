@@ -19,6 +19,19 @@ var s = `<?xml version="1.0" encoding="UTF-8"?>
    <foo>bar</foo>
   </osm>`
 
+var sPrefix = `<?xml version="1.0" encoding="UTF-8"?>
+	<bookstore xmlns:fiction="something.com">
+		<fiction:book>
+			<title>Nineteen Eighty Four</title>
+			<author>George Orwell</author>
+		</fiction:book>
+		<fiction:book>
+			<title>The Way of Kings</title>
+			<author>Brandon Sanderson</author>
+		</fiction:book>
+	</bookstore>
+	`
+
 // TestDecode ensures that decode does not return any errors (not that useful)
 func TestDecode(t *testing.T) {
 	assert := assert.New(t)
@@ -82,4 +95,16 @@ func TestTrim(t *testing.T) {
 		got := trimNonGraphic(scenario.in)
 		assert.Equal(t, scenario.expected, got)
 	}
+}
+
+func TestPrefix(t *testing.T) {
+	assert := assert.New(t)
+	// Decode XML document
+	root := &Node{}
+	var err error
+	dec := NewDecoder(strings.NewReader(sPrefix), IncludeNSPrefix(true), WithAttrPrefix(""))
+	err = dec.Decode(root)
+	assert.NoError(err)
+
+	assert.Equal(len(root.Children["bookstore"][0].Children["fiction:book"]), 2)
 }

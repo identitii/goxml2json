@@ -1,6 +1,6 @@
 module github.com/basgys/goxml2json
 
-go 1.16
+go 1.21
 
 require (
 	github.com/bitly/go-simplejson v0.5.1

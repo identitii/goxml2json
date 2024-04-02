@@ -23,6 +23,8 @@ type (
 	attrPrefixer    string
 	contentPrefixer string
 
+	includeNSPrefix bool
+
 	excluder []string
 
 	nodesFormatter struct {
@@ -84,6 +86,11 @@ func (tc *customTypeConverter) Convert(s string) string {
 func WithAttrPrefix(prefix string) *attrPrefixer {
 	ap := attrPrefixer(prefix)
 	return &ap
+}
+
+func IncludeNSPrefix(v bool) *includeNSPrefix {
+	nspre := includeNSPrefix(v)
+	return &nspre
 }
 
 func (a *attrPrefixer) AddToEncoder(e *Encoder) *Encoder {
@@ -158,4 +165,13 @@ func ToArray() *arrayFormatter {
 
 func (af *arrayFormatter) AddTo(n *Node) {
 	n.ChildrenAlwaysAsArray = true
+}
+
+func (i *includeNSPrefix) AddToEncoder(e *Encoder) *Encoder {
+	return e
+}
+
+func (i *includeNSPrefix) AddToDecoder(d *Decoder) *Decoder {
+	d.includeNSPrefix = bool(*i)
+	return d
 }

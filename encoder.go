@@ -8,12 +8,11 @@ import (
 
 // An Encoder writes JSON objects to an output stream.
 type Encoder struct {
-	w                      io.Writer
-	err                    error
-	contentPrefix          string
-	attributePrefix        string
-	includeNamespacePrefix bool
-	tc                     encoderTypeConverter
+	w               io.Writer
+	err             error
+	contentPrefix   string
+	attributePrefix string
+	tc              encoderTypeConverter
 }
 
 // NewEncoder returns a new encoder that writes to w.
