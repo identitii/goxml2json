@@ -1,4 +1,4 @@
-module github.com/basgys/goxml2json
+module github.com/identitii/goxml2json
 
 go 1.21
 

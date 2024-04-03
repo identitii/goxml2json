@@ -1,4 +1,4 @@
-# goxml2json [![CircleCI](https://circleci.com/gh/basgys/goxml2json.svg?style=svg)](https://circleci.com/gh/basgys/goxml2json)
+# goxml2json 
 
 Go package that converts XML to JSON
 
@@ -8,13 +8,15 @@ Supports:
  - xmlns prefixes
  - maintains ordering
 
+ [Original Repo](https://github.com/basgys/goxml2json)
+
 ### Install
 
-    go get -u github.com/basgys/goxml2json
+    go get -u github.com/identitii/goxml2json
 
 ### Importing
 
-    import github.com/basgys/goxml2json
+    import github.com/identitii/goxml2json
 
 ### Usage
 
@@ -27,7 +29,7 @@ Supports:
   	"fmt"
   	"strings"
 
-  	xj "github.com/basgys/goxml2json"
+  	xj "github.com/identitii/goxml2json"
   )
 
   func main() {
@@ -96,18 +98,3 @@ Supports:
   	// {"price": 19.95}
   }
 ```
-
-### Contributing
-Feel free to contribute to this project if you want to fix/extend/improve it.
-
-### Contributors
-
-  - [DirectX](https://github.com/directx)
-  - [powerslacker](https://github.com/powerslacker)  
-  - [samuelhug](https://github.com/samuelhug)
-
-### TODO
-
-   * Categorise errors
-   * Option to prettify the JSON output
-   * Benchmark
