@@ -3,27 +3,32 @@ package xml2json
 import (
 	"encoding/xml"
 	"io"
+	"strconv"
 	"unicode"
 
 	"golang.org/x/net/html/charset"
 )
 
 const (
-	attrPrefix    = "-"
-	contentPrefix = "#"
+	attrPrefix     = "-"
+	contentPrefix  = "#"
+	sequencePrefix = "^"
 )
 
 // A Decoder reads and decodes XML objects from an input stream.
 type Decoder struct {
-	r               io.Reader
-	err             error
-	attributePrefix string
-	contentPrefix   string
-	nsPrefix        string
-	includeNSPrefix bool
-	excludeAttrs    map[string]bool
-	formatters      []nodeFormatter
-	NameSpacePrefix map[string]string
+	r                  io.Reader
+	err                error
+	attributePrefix    string
+	contentPrefix      string
+	sequencePrefix     string
+	nsPrefix           string
+	includeNSPrefix    bool
+	excludeAttrs       map[string]bool
+	formatters         []nodeFormatter
+	NameSpacePrefix    map[string]string
+	levelSequence      []int
+	includeXMLSequence bool
 }
 
 type element struct {
@@ -31,6 +36,15 @@ type element struct {
 	nsPrefix string
 	n        *Node
 	label    string
+	sequence int
+}
+
+func (dec *Decoder) SetSequencePrefix(prefix string) {
+	dec.sequencePrefix = prefix
+}
+
+func (dec *Decoder) IncludeXMLSequence(v bool) {
+	dec.includeXMLSequence = v
 }
 
 func (dec *Decoder) SetAttributePrefix(prefix string) {
@@ -64,7 +78,7 @@ func (dec *Decoder) DecodeWithCustomPrefixes(root *Node, contentPrefix string, a
 
 // NewDecoder returns a new decoder that reads from r.
 func NewDecoder(r io.Reader, plugins ...plugin) *Decoder {
-	d := &Decoder{r: r, contentPrefix: contentPrefix, attributePrefix: attrPrefix, excludeAttrs: map[string]bool{}, NameSpacePrefix: map[string]string{}}
+	d := &Decoder{r: r, sequencePrefix: sequencePrefix, contentPrefix: contentPrefix, attributePrefix: attrPrefix, excludeAttrs: map[string]bool{}, NameSpacePrefix: map[string]string{}}
 	for _, p := range plugins {
 		d = p.AddToDecoder(d)
 	}
@@ -84,21 +98,24 @@ func (dec *Decoder) Decode(root *Node) error {
 		parent: nil,
 		n:      root,
 	}
+	dec.levelSequence = append(dec.levelSequence, 1)
 
 	for {
 		t, _ := xmlDec.Token()
 		if t == nil {
 			break
 		}
-
 		switch se := t.(type) {
 		case xml.StartElement:
 			// Build new a new current element and link it to its parent
 			elem = &element{
-				parent: elem,
-				n:      &Node{},
-				label:  se.Name.Local,
+				parent:   elem,
+				n:        &Node{},
+				label:    se.Name.Local,
+				sequence: dec.levelSequence[len(dec.levelSequence)-1],
 			}
+			dec.levelSequence[len(dec.levelSequence)-1]++
+			dec.levelSequence = append(dec.levelSequence, 1)
 			if se.Name.Space != "" && dec.includeNSPrefix {
 				prefix, exists := dec.NameSpacePrefix[se.Name.Space]
 				if exists {
@@ -118,10 +135,14 @@ func (dec *Decoder) Decode(root *Node) error {
 				}
 				elem.n.AddChild(dec.attributePrefix+a.Name.Local, &Node{Data: a.Value})
 			}
+			if dec.includeXMLSequence {
+				elem.n.AddChild(dec.sequencePrefix+"sequence", &Node{Data: strconv.Itoa(elem.sequence)})
+			}
 		case xml.CharData:
 			// Extract XML data (if any)
 			elem.n.Data = trimNonGraphic(string(xml.CharData(se)))
 		case xml.EndElement:
+			dec.levelSequence = dec.levelSequence[:len(dec.levelSequence)-1]
 			// And add it to its parent list
 			if elem.parent != nil {
 				elem.parent.n.AddChild(elem.label, elem.n)

@@ -20,10 +20,13 @@ type (
 		parseTypes []JSType
 	}
 
-	attrPrefixer    string
-	contentPrefixer string
+	attrPrefixer     string
+	contentPrefixer  string
+	sequencePrefixer string
 
 	includeNSPrefix bool
+
+	includeXMLSequence bool
 
 	excluder []string
 
@@ -91,6 +94,11 @@ func WithAttrPrefix(prefix string) *attrPrefixer {
 func IncludeNSPrefix(v bool) *includeNSPrefix {
 	nspre := includeNSPrefix(v)
 	return &nspre
+}
+
+func IncludeXMLSequence(v bool) *includeXMLSequence {
+	seq := includeXMLSequence(v)
+	return &seq
 }
 
 func (a *attrPrefixer) AddToEncoder(e *Encoder) *Encoder {
@@ -173,5 +181,23 @@ func (i *includeNSPrefix) AddToEncoder(e *Encoder) *Encoder {
 
 func (i *includeNSPrefix) AddToDecoder(d *Decoder) *Decoder {
 	d.includeNSPrefix = bool(*i)
+	return d
+}
+
+func (i *includeXMLSequence) AddToEncoder(e *Encoder) *Encoder {
+	return e
+}
+
+func (i *includeXMLSequence) AddToDecoder(d *Decoder) *Decoder {
+	d.includeXMLSequence = bool(*i)
+	return d
+}
+
+func (a *sequencePrefixer) AddToEncoder(e *Encoder) *Encoder {
+	return e
+}
+
+func (a *sequencePrefixer) AddToDecoder(d *Decoder) *Decoder {
+	d.sequencePrefix = string((*a))
 	return d
 }
