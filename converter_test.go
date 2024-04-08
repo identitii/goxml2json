@@ -200,3 +200,39 @@ func TestConvertISO(t *testing.T) {
 	// Assertion
 	assert.JSONEq(string(expected), res.String(), "Drumroll")
 }
+
+func TestXMLSequence(t *testing.T) {
+	assert := assert.New(t)
+	s := `<?xml version="1.0" encoding="UTF-8"?>
+		<osm>
+			<foo>bar1</foo>
+			<foo>bar2</foo>
+			<foo>bar3</foo>
+			<foo>bar4</foo>
+			<hello>
+			<world>!</world>
+			</hello>
+		</osm>`
+
+	jsnExpr := `{
+		"osm": {
+		  "^sequence": "1",
+		  "foo": [
+			{ "#content": "bar1", "^sequence": "1" },
+			{ "#content": "bar2", "^sequence": "2" },
+			{ "#content": "bar3", "^sequence": "3" },
+			{ "#content": "bar4", "^sequence": "4" }
+		  ],
+		  "hello": {
+			"^sequence": "5",
+			"world": { "#content": "!", "^sequence": "1" }
+		  }
+		}
+	  }`
+
+	res, err := Convert(strings.NewReader(s), IncludeXMLSequence(true))
+	assert.NoError(err)
+
+	assert.JSONEq(jsnExpr, res.String())
+
+}
