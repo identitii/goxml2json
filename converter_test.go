@@ -237,7 +237,7 @@ func TestXMLSequence(t *testing.T) {
 
 }
 
-func TestConvertWithMixedTags(t *testing.T) {
+func TestConvertWithNSPrefix(t *testing.T) {
 	assert := assert.New(t)
 
 	s := `<?xml version="1.0" encoding="UTF-8"?>
