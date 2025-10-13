@@ -237,6 +237,33 @@ func TestXMLSequence(t *testing.T) {
 
 }
 
+func TestUseTokenRaw(t *testing.T) {
+	assert := assert.New(t)
+
+	s := `<a:root xmlns:a="http://web.site/">
+			<b:header xmlns:b="http://web.site/"/>
+			<a:body>
+				<a:sample>example</a:sample>
+			</a:body>
+		</a:root>`
+
+	js, err := Convert(strings.NewReader(s), WithAttrPrefix("-"), IncludeNSPrefix(true), UseRawToken(true))
+	assert.NoError(err)
+
+	jsExpected := `{
+		"a:root": {
+			"-a": "http://web.site/",
+			"b:header": {
+				"-b": "http://web.site/"
+			},
+			"a:body": {
+				"a:sample": "example"
+			}
+		}
+	}`
+	assert.JSONEq(jsExpected, js.String())
+}
+
 func TestConvertWithNSPrefix(t *testing.T) {
 	assert := assert.New(t)
 
